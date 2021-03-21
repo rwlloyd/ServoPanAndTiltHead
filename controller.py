@@ -5,6 +5,7 @@ from gpiozero import AngularServo
 from gpiozero import Button
 from picamera import PiCamera
 import os
+import time
 from time import sleep
 
 # Pan and tilt Servo Pins are 23 and 24 respectively
@@ -32,10 +33,10 @@ dwell = 0.5
 imageNum = 0
 scanNum = 0
 
-scanning = False
+#scanning = False
 
 def runSequence():
-    scanning = True
+    #scanning = True
     panServo.angle = -45
     sleep(dwell)
     captureNext()
@@ -48,7 +49,7 @@ def runSequence():
     sleep(dwell)
     captureNext()
     sleep(dwell)
-    scanning = False
+    #scanning = False
     # Reset the Image number
     imageNum = 0
     # increment the scan number
@@ -57,11 +58,15 @@ def runSequence():
 def captureNext():
     file_name = os.path.join(output_folder, 'scan{0:02d}_image{1:02d}.jpg'.format(scanNum, imageNum))
     camera.capture(file_name)
+    print("captured image: " + 'scan{0:02d}_image{1:02d}.jpg'.format(scanNum, imageNum))
     imageNum += 1
 
-if __name__ = "__main__":
+if __name__ == "__main__":
     path = os.getcwd()
     folder_name = 'captureSession_' + time.strftime("%Y_%m_%d_%H_%M_%S")
     os.mkdir(folder_name)
     output_folder = os.path.join(path, folder_name)
-    runSequence()
+    while True:
+        button.whenPressed = runSequence
+    
+
