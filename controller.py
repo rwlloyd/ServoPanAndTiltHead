@@ -1,3 +1,5 @@
+### UNTESTED ON HARDWARE ###
+
 # Import libraries
 from gpiozero import AngularServo
 from gpiozero import Button
