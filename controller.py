@@ -28,15 +28,16 @@ camera.awb_mode = 'off'
 camera.awb_gains = g
 
 # Dwell time for camera shake to settle
-global dwell = 0.5
+dwell = 1
 # Variable to keep track of the image and scan numbers
-global imageNum = 0
-global scanNum = 0
+imageNum = 0
+scanNum = 0
 
 #scanning = False
 
 def runSequence():
     #scanning = True
+    print("Capturing")
     panServo.angle = -45
     sleep(dwell)
     captureNext()
@@ -66,6 +67,8 @@ if __name__ == "__main__":
     folder_name = 'captureSession_' + time.strftime("%Y_%m_%d_%H_%M_%S")
     os.mkdir(folder_name)
     output_folder = os.path.join(path, folder_name)
-    button.wait_for_press() = runSequence()
+    while True:
+        print("Waiting...")
+        button.when_pressed = runSequence
     
 
