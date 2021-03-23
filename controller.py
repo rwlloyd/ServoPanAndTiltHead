@@ -4,6 +4,7 @@
 from gpiozero import AngularServo
 from gpiozero import Button
 from picamera import PiCamera
+import pigpio
 import os
 import time
 from time import sleep
