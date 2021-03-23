@@ -9,8 +9,8 @@ import time
 from time import sleep
 
 # Pan and tilt Servo Pins are 23 and 24 respectively
-panServo = AngularServo(23, initial_angle=0, min_angle=-90, max_angle=90)
-tiltServo = AngularServo(24, initial_angle=0, min_angle=-60, max_angle=60)
+panServo = AngularServo(12, initial_angle=0, min_angle=-90, max_angle=90)
+tiltServo = AngularServo(13, initial_angle=0, min_angle=-60, max_angle=60)
 
 button = Button(25)
 
