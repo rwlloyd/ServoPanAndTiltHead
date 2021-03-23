@@ -27,48 +27,53 @@ g = camera.awb_gains
 camera.awb_mode = 'off'
 camera.awb_gains = g
 
-# Dwell time for camera shake to settle
-dwell = 1
-# Variable to keep track of the image and scan numbers
-imageNum = 0
-scanNum = 0
 
 #scanning = False
 
 def runSequence():
+    # Dwell time for camera shake to settle
+    dwell = 1
     #scanning = True
     print("Capturing")
     panServo.angle = -45
     sleep(dwell)
-    captureNext()
+    captureNext(scanNum, imageNum)
     sleep(dwell)
     panServo.angle = 0
     sleep(dwell)
-    captureNext()
+    captureNext(scanNum, imageNum)
     sleep(dwell)
     panServo.angle = 45
     sleep(dwell)
-    captureNext()
+    captureNext(scanNum, imageNum)
     sleep(dwell)
     #scanning = False
-    # Reset the Image number
-    imageNum = 0
-    # increment the scan number
-    scanNum += 1
 
-def captureNext():
-    file_name = os.path.join(output_folder, 'scan{0:02d}_image{1:02d}.jpg'.format(scanNum, imageNum))
+
+def captureNext(scNum, imNum):
+    file_name = os.path.join(output_folder, 'scan{0:02d}_image{1:02d}.jpg'.format(scNum, imNum))
     camera.capture(file_name)
-    print("captured image: " + 'scan{0:02d}_image{1:02d}.jpg'.format(scanNum, imageNum))
-    imageNum += 1
+    print("captured image: " + 'scan{0:02d}_image{1:02d}.jpg'.format(scNum, imNum))
+    imNum += 1
 
 if __name__ == "__main__":
+    # Variables to keep track of the image and scan numbers
+    imageNum = 0
+    scanNum = 0
+    #get current working directory
     path = os.getcwd()
+    # make the folder name 
     folder_name = 'captureSession_' + time.strftime("%Y_%m_%d_%H_%M_%S")
+    # make the folder
     os.mkdir(folder_name)
+    # construct the output folder path
     output_folder = os.path.join(path, folder_name)
     while True:
         print("Waiting...")
         button.when_pressed = runSequence
+        # Reset the Image number
+        imageNum = 0
+        # increment the scan number
+        scanNum += 1
     
 
