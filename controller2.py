@@ -76,10 +76,14 @@ os.mkdir(folder_name)
 # construct the output folder path
 output_folder = os.path.join(path, folder_name)
 
+GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback, bouncetime=100)
+update(panServo, 0)
+update(tiltServo,0)
+
 try:
     while True:
-        GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
-
+        # Erm... theres not much to do here. I'll have a nap
+        sleep(0.1)
 #Clean things up at the end
 except KeyboardInterrupt:
    panServo.stop()
