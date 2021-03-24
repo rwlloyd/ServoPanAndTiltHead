@@ -1,9 +1,12 @@
 # Import libraries
 import RPi.GPIO as GPIO
+from picamera import PiCamera
+import os
 import time
+from time import sleep
 
-panServoPin = 23
-tiltServoPin = 24
+panServoPin = 12
+tiltServoPin = 13
 buttonPin = 25
 
 # Set GPIO numbering mode
@@ -19,11 +22,73 @@ tiltServo = GPIO.PWM(tiltServoPin,50)
 #start PWM running, but with value of 0 (pulse off)
 panServo.start(0)
 tiltServo.start(0)
-print ("Servos Initiated")
-time.sleep(1)
+print ("Servos Init")
+sleep(0.5)
 
-# Define variable duty
+# Setup the camera
+camera = PiCamera(resolution=(1280, 720), framerate=30)
+# Set ISO to the desired value
+camera.iso = 100
+# Wait for the automatic gain control to settle
+sleep(2)
+# Now fix the values
+#camera.shutter_speed = camera.exposure_speed
+#camera.exposure_mode = 'off'
+#g = camera.awb_gains
+#camera.awb_mode = 'off'
+#camera.awb_gains = g
+print("Camera Init")
+sleep(0.5)
+print("Ready")
+
+def update(thisServo, angle):
+        duty = float(angle) / 10.0 + 2.5
+        thisServo.ChangeDutyCycle(duty)
+
+def captureNext():
+    # Dwell time for the camera to settle
+    dwell = 0.5
+    sleep(dwell)
+    file_name = os.path.join(output_folder, 'image_' + time.strftime("%H_%M_%S") + '.jpg')
+    camera.capture(file_name)
+    print("captured image: " + 'image_' + time.strftime("%H_%M_%S") + '.jpg')
+    sleep(dwell)
+
+def button_callback():
+    update(panServo, 0)
+    update(tiltServo, 0)
+    update(panServo, -45)
+    captureNext()
+    update(panServo, 0)
+    captureNext()
+    update(panServo, 45)
+    captureNext()
+    update(panServo, 0)
+    print("Scan Complete!")
+
+# Handling the files
+#get current working directory
+path = os.getcwd()
+# make the folder name
+folder_name = 'captureSession_' + time.strftime("%Y_%m_%d_%H_%M_%S")
+# make the folder
+os.mkdir(folder_name)
+# construct the output folder path
+output_folder = os.path.join(path, folder_name)
+
+try:
+    while True:
+        GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
+
+#Clean things up at the end
+except KeyboardInterrupt:
+   panServo.stop()
+   tiltServo.stop()
+   GPIO.cleanup()
+   print ("Goodbye")
+
 """
+The short version of how servos are controlled
 
 https://raspberrypi.stackexchange.com/questions/108111/what-is-the-relationship-between-angle-and-servo-motor-duty-cycle-how-do-i-impl
 Servos are controlled by pulse width, the pulse width determines the horn angle.
@@ -55,23 +120,3 @@ Don't use dutycycles, if possible use pulse widths, and think in pulse widths.
 If you send pulses at 60 Hz by duty cycle the servo will go to the wrong position.
 
 """
-
-def update(thisServo, angle):
-        duty = float(angle) / 10.0 + 2.5
-        thisServo.ChangeDutyCycle(duty)
-
-def button_callback():
-    update(panServo, 0)
-    update(tiltServo, 0)
-
-# Wait a couple of seconds
-time.sleep(2)
-
-GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
-
-    #Clean things up at the end
-#except KeyboardInterrupt:
-#    panServo.stop()
-#    tiltServo.stop()
-#    GPIO.cleanup()
-#    print ("Goodbye")
