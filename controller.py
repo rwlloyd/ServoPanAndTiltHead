@@ -1,10 +1,7 @@
-### UNTESTED ON HARDWARE ###
-
 # Import libraries
 from gpiozero import AngularServo
 from gpiozero import Button
 from picamera import PiCamera
-import pigpio
 import os
 import time
 from time import sleep
@@ -22,59 +19,41 @@ camera.iso = 100
 # Wait for the automatic gain control to settle
 sleep(2)
 # Now fix the values
-camera.shutter_speed = camera.exposure_speed
-camera.exposure_mode = 'off'
-g = camera.awb_gains
-camera.awb_mode = 'off'
-camera.awb_gains = g
+#camera.shutter_speed = camera.exposure_speed
+#camera.exposure_mode = 'off'
+#g = camera.awb_gains
+#camera.awb_mode = 'off'
+#camera.awb_gains = g
 
-
-#scanning = False
+#get current working directory
+path = os.getcwd()
+# make the folder name
+folder_name = 'captureSession_' + time.strftime("%Y_%m_%d_%H_%M_%S")
+# make the folder
+os.mkdir(folder_name)
+# construct the output folder path
+output_folder = os.path.join(path, folder_name)
 
 def runSequence():
-    # Dwell time for camera shake to settle
-    dwell = 1
-    #scanning = True
     print("Capturing")
     panServo.angle = -45
-    sleep(dwell)
-    captureNext(scanNum, imageNum)
-    sleep(dwell)
+    captureNext()
     panServo.angle = 0
-    sleep(dwell)
-    captureNext(scanNum, imageNum)
-    sleep(dwell)
+    captureNext()
     panServo.angle = 45
-    sleep(dwell)
-    captureNext(scanNum, imageNum)
-    sleep(dwell)
-    #scanning = False
+    captureNext()
+    panServo.angle = 0
+    scanNum =+ 1
 
-
-def captureNext(scNum, imNum):
-    file_name = os.path.join(output_folder, 'scan{0:02d}_image{1:02d}.jpg'.format(scNum, imNum))
+def captureNext():
+    # Dwell time for the camera to settle
+    dwell = 0.5
+    sleep(dwell)
+    file_name = os.path.join(output_folder, 'image_' + time.strftime("%H_%M_%S") + '.jpg')
     camera.capture(file_name)
-    print("captured image: " + 'scan{0:02d}_image{1:02d}.jpg'.format(scNum, imNum))
-    imNum += 1
+    print("captured image: " + 'image_' + time.strftime("%H_%M_%S") + '.jpg')
+    sleep(dwell)
 
-if __name__ == "__main__":
-    # Variables to keep track of the image and scan numbers
-    imageNum = 0
-    scanNum = 0
-    #get current working directory
-    path = os.getcwd()
-    # make the folder name 
-    folder_name = 'captureSession_' + time.strftime("%Y_%m_%d_%H_%M_%S")
-    # make the folder
-    os.mkdir(folder_name)
-    # construct the output folder path
-    output_folder = os.path.join(path, folder_name)
-    while True:
-        print("Waiting...")
-        button.when_pressed = runSequence
-        # Reset the Image number
-        imageNum = 0
-        # increment the scan number
-        scanNum += 1
-    
+while True:
+    button.when_pressed = runSequence
 
