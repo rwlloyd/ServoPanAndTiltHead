@@ -7,7 +7,7 @@ tiltServoPin = 24
 buttonPin = 25
 
 # Set GPIO numbering mode
-GPIO.setmode(GPIO.BOARD)
+GPIO.setmode(GPIO.BCM)
 
 # Set pin 11 as an output, and set servo1 as pin 11 as PWM
 GPIO.setup(panServoPin, GPIO.OUT)
@@ -66,12 +66,12 @@ def button_callback():
 
 # Wait a couple of seconds
 time.sleep(2)
-while True:
-    GPIO.add_event_detect(10,GPIO.RISING,callback=button_callback)
+
+GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
 
     #Clean things up at the end
-    except KeyboardInterrupt:
-        panServo.stop()
-        tiltServo.stop()
-        GPIO.cleanup()
-        print ("Goodbye")
+#except KeyboardInterrupt:
+#    panServo.stop()
+#    tiltServo.stop()
+#    GPIO.cleanup()
+#    print ("Goodbye")
