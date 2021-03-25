@@ -22,7 +22,7 @@ camera = PiCamera(resolution=(1280, 720), framerate=30)
 # Set ISO to the desired value
 camera.iso = 100
 # Wait for the automatic gain control to settle
-sleep(2)
+sleep(1)
 # Now fix the values
 #camera.shutter_speed = camera.exposure_speed
 #camera.exposure_mode = 'off'
@@ -32,21 +32,32 @@ sleep(2)
 
 
 def button_callback(self):
+    scanning = True
     print("Capturing")
+    # Test Pan Servo
     panServo.angle = 0
     captureNext()
     panServo.angle = 45
     captureNext()
     panServo.angle = 0
     captureNext()
-    
+    # Test Tilt Servo
     tiltServo.angle = 0
     captureNext()
     tiltServo.angle = 45
     captureNext()
     tiltServo.angle = 0
     captureNext()
-    
+    scanning = False
+
+def captureNext():
+    # Dwell time for the camera to settle
+    dwell = 0.5
+    sleep(dwell)
+    file_name = os.path.join(output_folder, 'image_' + time.strftime("%H_%M_%S") + '.jpg')
+    camera.capture(file_name)
+    print("captured image: " + 'image_' + time.strftime("%H_%M_%S") + '.jpg')
+    sleep(dwell)
 
 # Handling the files
 #get current working directory
@@ -58,14 +69,15 @@ os.mkdir(folder_name)
 # construct the output folder path
 output_folder = os.path.join(path, folder_name)
 
-GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
-
+#GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
+button.when_pressed = button_callback
+print("ready")
 try:
     while True:
         # Erm... theres not much to do here. I'll have a nap
-        if not Scanning:
-            update(panServo, 0)
-            update(tiltServo, 0)
+        if not scanning:
+            panServo.angle = 0
+            tiltServo.angle = 0
 #Clean things up at the end
 except KeyboardInterrupt:
    panServo.stop()
