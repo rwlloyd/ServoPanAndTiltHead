@@ -4,9 +4,9 @@ from picamera import PiCamera
 import os
 import time
 from time import sleep
-
-panServoPin = 12
-tiltServoPin = 13
+Scanning = False ##for testing
+panServoPin = 13
+tiltServoPin = 12
 buttonPin = 25
 
 # Set GPIO numbering mode
@@ -40,7 +40,6 @@ sleep(2)
 print("Camera Init")
 sleep(0.5)
 print("Ready")
-
 def update(thisServo, angle):
         duty = float(angle) / 10.0 + 2.5
         thisServo.ChangeDutyCycle(duty)
@@ -54,17 +53,24 @@ def captureNext():
     print("captured image: " + 'image_' + time.strftime("%H_%M_%S") + '.jpg')
     sleep(dwell)
 
-def button_callback():
-    update(panServo, 0)
-    update(tiltServo, 0)
-    update(panServo, -45)
-    captureNext()
-    update(panServo, 0)
-    captureNext()
-    update(panServo, 45)
-    captureNext()
-    update(panServo, 0)
+def button_callback(self):
+    Scanning = True
+    update(panServo, 90)
+    update(tiltServo, 90)
+    sleep(2)
+    update(panServo, 90+45)
+    sleep(2)
+    update(panServo, 90)
+    sleep(2)
+#    update(panServo, -45)
+#    captureNext()
+#    update(panServo, 0)
+#    captureNext()
+#    update(panServo, 45)
+#    captureNext()
+#    update(panServo, 0)
     print("Scan Complete!")
+    Scanning = False
 
 # Handling the files
 #get current working directory
@@ -76,14 +82,14 @@ os.mkdir(folder_name)
 # construct the output folder path
 output_folder = os.path.join(path, folder_name)
 
-GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback, bouncetime=100)
-update(panServo, 0)
-update(tiltServo,0)
+GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
 
 try:
     while True:
         # Erm... theres not much to do here. I'll have a nap
-        sleep(0.1)
+        if not Scanning:
+            update(panServo, 0)
+            update(tiltServo, 0)
 #Clean things up at the end
 except KeyboardInterrupt:
    panServo.stop()

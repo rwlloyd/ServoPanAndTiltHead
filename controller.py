@@ -7,8 +7,8 @@ import time
 from time import sleep
 
 # Pan and tilt Servo Pins are 23 and 24 respectively
-panServo = AngularServo(23, initial_angle=0, min_angle=-90, max_angle=90)
-tiltServo = AngularServo(24, initial_angle=0, min_angle=-60, max_angle=60)
+panServo = AngularServo(13, initial_angle=0, min_angle=-90, max_angle=90)
+tiltServo = AngularServo(12, initial_angle=0, min_angle=-60, max_angle=60)
 
 button = Button(25)
 
@@ -36,14 +36,14 @@ output_folder = os.path.join(path, folder_name)
 
 def runSequence():
     print("Capturing")
-    panServo.angle = -45
+    panServo.angle = 90
     captureNext()
-    panServo.angle = 0
+    panServo.angle = 90+45
     captureNext()
-    panServo.angle = 45
+    panServo.angle = 90
     captureNext()
-    panServo.angle = 0
-    tiltServo.angle = 0
+    panServo.angle = 90
+    tiltServo.angle = 90
     scanNum =+ 1
 
 def captureNext():
