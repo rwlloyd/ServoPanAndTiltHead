@@ -30,7 +30,7 @@ camera = PiCamera(resolution=(1280, 720), framerate=30)
 # Set ISO to the desired value
 camera.iso = 100
 # Wait for the automatic gain control to settle
-sleep(2)
+sleep(1)
 # Now fix the values
 #camera.shutter_speed = camera.exposure_speed
 #camera.exposure_mode = 'off'
@@ -40,9 +40,8 @@ sleep(2)
 print("Camera Init")
 sleep(0.5)
 print("Ready")
-def update(thisServo, angle):
-        duty = float(angle) / 10.0 + 2.5
-        thisServo.ChangeDutyCycle(duty)
+
+scanning = False
 
 def captureNext():
     # Dwell time for the camera to settle
@@ -54,7 +53,7 @@ def captureNext():
     sleep(dwell)
 
 def button_callback(self):
-    Scanning = True
+    scanning = True
     update(panServo, 90)
     update(tiltServo, 90)
     sleep(2)
@@ -70,7 +69,7 @@ def button_callback(self):
 #    captureNext()
 #    update(panServo, 0)
     print("Scan Complete!")
-    Scanning = False
+    scanning = False
 
 # Handling the files
 #get current working directory
@@ -87,7 +86,7 @@ GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
 try:
     while True:
         # Erm... theres not much to do here. I'll have a nap
-        if not Scanning:
+        if not scanning:
             update(panServo, 0)
             update(tiltServo, 0)
 #Clean things up at the end
