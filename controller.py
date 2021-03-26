@@ -1,3 +1,5 @@
+### Erroring out when arranging the array and positions etc. Probably a silly mistake. Concentrate....
+
 # Import libraries
 from gpiozero import AngularServo
 from gpiozero import Button
@@ -10,6 +12,13 @@ panServoPin = 13
 tiltServoPin = 12
 buttonPin = 25
 scanning = False
+
+# Scanning Parameters
+scan_shape =  [3,3] # X x Y positions..
+panMin = -90
+panMax = 90
+tiltMin = -60
+tiltMax = 60
 
 # Pan and tilt Servo servos set up
 panServo = AngularServo(panServoPin, initial_angle=0, min_angle=-90, max_angle=90)
@@ -31,39 +40,27 @@ sleep(1)
 #camera.awb_gains = g
 
 
-def set_position(pan :int, tilt :int):
-    panServo.angle = pan
-    tiltServo.angle = tilt
+def set_position(newPos):
+    panServo.angle = newPos[0]
+    tiltServo.angle = newPos[1]
 
 def button_callback(self):
-    scanning = True
+    # Calculate the positions of the array
+    scan_locs = []
+    panStep = (panMax - panMin) / scan_shape[0]
+    tiltStep = (tiltMax - tiltMin) / scan_shape[1]
+    print(panStep, tiltStep)
+    for j in range(scan_shape[1]-1):
+        for i in range(scan_shape[0]-1):
+            scan_locs[i+(scan_shape[1]*j)] = [(panMax - (i*panStep)), (tiltMax - (j*tiltStep))]
     print("Capturing")
-    # do a 3 x 3 scan
-    # I know, it's horrible todo it like this.
-    # Eventually, pass the shape of the scan as an array?
-    set_position(-45, 45)
-    captureNext()
-    set_position(0, 45)
-    captureNext()
-    set_position(45, 45)
-    captureNext()
-    set_position(45, 0)
-    captureNext()
-    set_position(0, 0)
-    captureNext()
-    set_position(-45, 0)
-    captureNext()
-    set_position(-45, -45)
-    captureNext()
-    set_position(0, -45)
-    captureNext()
-    set_position(45, -45)
-    captureNext()
-    set_position(0, 0)
+    # do a scan
+    for position in range(scan_shape[0]*scan_shape[1]):
+        set_position(scan_locs[position])
+        #captureNext()
     print("Scan Done")
     sleep(0.25)
     print("ready")
-    scanning = False
 
 def captureNext():
     # Dwell time for the camera to settle
