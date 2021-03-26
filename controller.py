@@ -15,7 +15,7 @@ scanning = False
 panServo = AngularServo(panServoPin, initial_angle=0, min_angle=-90, max_angle=90)
 tiltServo = AngularServo(tiltServoPin, initial_angle=0, min_angle=-60, max_angle=60)
 # Button setup
-button = Button(buttonPin)
+button = Button(buttonPin, bounce_time = 0.1)
 
 # Setup the camera
 camera = PiCamera(resolution=(1280, 720), framerate=30)
@@ -31,28 +31,43 @@ sleep(1)
 #camera.awb_gains = g
 
 
+def set_position(pan :int, tilt :int):
+    panServo.angle = pan
+    tiltServo.angle = tilt
+
 def button_callback(self):
     scanning = True
     print("Capturing")
-    # Test Pan Servo
-    panServo.angle = 0
+    # do a 3 x 3 scan
+    # I know, it's horrible todo it like this.
+    # Eventually, pass the shape of the scan as an array?
+    set_position(-45, 45)
     captureNext()
-    panServo.angle = 45
+    set_position(0, 45)
     captureNext()
-    panServo.angle = 0
+    set_position(45, 45)
     captureNext()
-    # Test Tilt Servo
-    tiltServo.angle = 0
+    set_position(45, 0)
     captureNext()
-    tiltServo.angle = 45
+    set_position(0, 0)
     captureNext()
-    tiltServo.angle = 0
+    set_position(-45, 0)
     captureNext()
+    set_position(-45, -45)
+    captureNext()
+    set_position(0, -45)
+    captureNext()
+    set_position(45, -45)
+    captureNext()
+    set_position(0, 0)
+    print("Scan Done")
+    sleep(0.25)
+    print("ready")
     scanning = False
 
 def captureNext():
     # Dwell time for the camera to settle
-    dwell = 0.5
+    dwell = 0.25
     sleep(dwell)
     file_name = os.path.join(output_folder, 'image_' + time.strftime("%H_%M_%S") + '.jpg')
     camera.capture(file_name)
@@ -69,21 +84,22 @@ os.mkdir(folder_name)
 # construct the output folder path
 output_folder = os.path.join(path, folder_name)
 
-#GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
-button.when_pressed = button_callback
+# Callback for dealing with button press'
+button.when_released = button_callback
+panServo.angle = 5
+tiltServo.angle = 5
+sleep(0.25)
+panServo.angle = 0
+tiltServo.angle = 0
 print("ready")
 try:
     while True:
         # Erm... theres not much to do here. I'll have a nap
-        if not scanning:
-            panServo.angle = 0
-            tiltServo.angle = 0
+        sleep(0.1)
+        pass
 #Clean things up at the end
 except KeyboardInterrupt:
-   panServo.stop()
-   tiltServo.stop()
-   GPIO.cleanup()
-   print ("Goodbye")
+    print ("Goodbye")
 
 """
 The short version of how servos are controlled
