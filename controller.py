@@ -1,4 +1,19 @@
-### Erroring out when arranging the array and positions etc. Probably a silly mistake. Concentrate....
+"""
+controller.py
+
+Python3 script to  control two servos and a raspberry pi camera in a pan and tilt mechanism.
+The first servo pans the second servo and tilt mechanism which holds the raspberry pi camera.
+
+dependencies:
+pip3 install gpiozero
+pip3 install picamera
+
+Things also work much more smoothly if you use the pigpio pin factory
+https://gpiozero.readthedocs.io/en/stable/api_pins.html#changing-pin-factory
+
+Rob Lloyd
+Lincoln, March 2021.
+"""
 
 # Import libraries
 from gpiozero import AngularServo
@@ -13,16 +28,19 @@ tiltServoPin = 12
 buttonPin = 25
 scanning = False
 
-# Scanning Parameters
-scan_shape =  [3,3] # X x Y positions..
-panMin = -90
-panMax = 90
+# These are angles from the centre point
+panMin = -60
+panMax = 60
 tiltMin = -60
 tiltMax = 60
 
+# Scanning Parameters
+scan_shape =  [5,5] # X x Y positions..
+home = [0,0]  # Save the home position for later
+
 # Pan and tilt Servo servos set up
-panServo = AngularServo(panServoPin, initial_angle=0, min_angle=-90, max_angle=90)
-tiltServo = AngularServo(tiltServoPin, initial_angle=0, min_angle=-60, max_angle=60)
+panServo = AngularServo(panServoPin, initial_angle=panMin+panMax, min_angle=panMin, max_angle=panMax)
+tiltServo = AngularServo(tiltServoPin, initial_angle=tiltMin+tiltMax, min_angle=tiltMin, max_angle=tiltMax)
 # Button setup
 button = Button(buttonPin, bounce_time = 0.1)
 
@@ -39,36 +57,39 @@ sleep(1)
 #camera.awb_mode = 'off'
 #camera.awb_gains = g
 
-
 def set_position(newPos):
+    print(f"Moving to: {newPos}")
     panServo.angle = newPos[0]
     tiltServo.angle = newPos[1]
 
 def button_callback(self):
     # Calculate the positions of the array
-    scan_locs = []
     panStep = (panMax - panMin) / scan_shape[0]
     tiltStep = (tiltMax - tiltMin) / scan_shape[1]
-    print(panStep, tiltStep)
-    for j in range(scan_shape[1]-1):
-        for i in range(scan_shape[0]-1):
-            scan_locs[i+(scan_shape[1]*j)] = [(panMax - (i*panStep)), (tiltMax - (j*tiltStep))]
-    print("Capturing")
-    # do a scan
-    for position in range(scan_shape[0]*scan_shape[1]):
-        set_position(scan_locs[position])
-        #captureNext()
+    print(f"panStep = {panStep}, tiltStep = {tiltStep}")
+    set_position([panMax, tiltMax])
+    captureNext()
+    for pStep in range(1, scan_shape[0] + 1):
+        for tStep in range(1,scan_shape[1] + 1):
+            set_position([None, tiltMax - (tStep*tiltStep)])
+            captureNext()
+        set_position([panMax-(pStep*panStep), None])
+        captureNext()
+
+    # Go back to the centre point
+    set_position(home)
     print("Scan Done")
     sleep(0.25)
     print("ready")
 
 def captureNext():
     # Dwell time for the camera to settle
-    dwell = 0.25
+    dwell = 0.5
     sleep(dwell)
     file_name = os.path.join(output_folder, 'image_' + time.strftime("%H_%M_%S") + '.jpg')
-    camera.capture(file_name)
-    print("captured image: " + 'image_' + time.strftime("%H_%M_%S") + '.jpg')
+    print("*")
+    #camera.capture(file_name)
+    #print("captured image: " + 'image_' + time.strftime("%H_%M_%S") + '.jpg')
     sleep(dwell)
 
 # Handling the files
