@@ -1,48 +1,29 @@
-"""
-controller.py
-
-Python3 script to  control two servos and a raspberry pi camera in a pan and tilt mechanism.
-The first servo pans the second servo and tilt mechanism which holds the raspberry pi camera.
-
-dependencies:
-pip3 install gpiozero
-pip3 install picamera
-
-Things also work much more smoothly if you use the pigpio pin factory
-https://gpiozero.readthedocs.io/en/stable/api_pins.html#changing-pin-factory
-
-Rob Lloyd
-Lincoln, March 2021.
-"""
-
 # Import libraries
-from gpiozero import AngularServo
-from gpiozero import Button
+import RPi.GPIO as GPIO
 from picamera import PiCamera
 import os
 import time
 from time import sleep
-
+Scanning = False ##for testing
 panServoPin = 13
 tiltServoPin = 12
 buttonPin = 25
-scanning = False
 
-# These are angles from the centre point
-panMin = -60
-panMax = 60
-tiltMin = -60
-tiltMax = 60
+# Set GPIO numbering mode
+GPIO.setmode(GPIO.BCM)
 
-# Scanning Parameters
-scan_shape =  [5,5] # X x Y positions..
-home = [0,0]  # Save the home position for later
+# Set pin 11 as an output, and set servo1 as pin 11 as PWM
+GPIO.setup(panServoPin, GPIO.OUT)
+GPIO.setup(tiltServoPin, GPIO.OUT)
+GPIO.setup(buttonPin, GPIO.IN, pull_up_down=GPIO.PUD_UP)
 
-# Pan and tilt Servo servos set up
-panServo = AngularServo(panServoPin, initial_angle=panMin+panMax, min_angle=panMin, max_angle=panMax)
-tiltServo = AngularServo(tiltServoPin, initial_angle=tiltMin+tiltMax, min_angle=tiltMin, max_angle=tiltMax)
-# Button setup
-button = Button(buttonPin, bounce_time = 0.1)
+panServo = GPIO.PWM(panServoPin,50) # Note panServoPin is pin, 50 = 50Hz pulse
+tiltServo = GPIO.PWM(tiltServoPin,50)
+#start PWM running, but with value of 0 (pulse off)
+panServo.start(0)
+tiltServo.start(0)
+print ("Servos Init")
+sleep(0.5)
 
 # Setup the camera
 camera = PiCamera(resolution=(1280, 720), framerate=30)
@@ -56,41 +37,39 @@ sleep(1)
 #g = camera.awb_gains
 #camera.awb_mode = 'off'
 #camera.awb_gains = g
+print("Camera Init")
+sleep(0.5)
+print("Ready")
 
-def set_position(newPos):
-    print(f"Moving to: {newPos}")
-    panServo.angle = newPos[0]
-    tiltServo.angle = newPos[1]
-
-def button_callback(self):
-    # Calculate the positions of the array
-    panStep = (panMax - panMin) / scan_shape[0]
-    tiltStep = (tiltMax - tiltMin) / scan_shape[1]
-    print(f"panStep = {panStep}, tiltStep = {tiltStep}")
-    set_position([panMax, tiltMax])
-    captureNext()
-    for pStep in range(1, scan_shape[0] + 1):
-        for tStep in range(1,scan_shape[1] + 1):
-            set_position([None, tiltMax - (tStep*tiltStep)])
-            captureNext()
-        set_position([panMax-(pStep*panStep), None])
-        captureNext()
-
-    # Go back to the centre point
-    set_position(home)
-    print("Scan Done")
-    sleep(0.25)
-    print("ready")
+scanning = False
 
 def captureNext():
     # Dwell time for the camera to settle
     dwell = 0.5
     sleep(dwell)
     file_name = os.path.join(output_folder, 'image_' + time.strftime("%H_%M_%S") + '.jpg')
-    print("*")
-    #camera.capture(file_name)
-    #print("captured image: " + 'image_' + time.strftime("%H_%M_%S") + '.jpg')
+    camera.capture(file_name)
+    print("captured image: " + 'image_' + time.strftime("%H_%M_%S") + '.jpg')
     sleep(dwell)
+
+def button_callback(self):
+    scanning = True
+    update(panServo, 90)
+    update(tiltServo, 90)
+    sleep(2)
+    update(panServo, 90+45)
+    sleep(2)
+    update(panServo, 90)
+    sleep(2)
+#    update(panServo, -45)
+#    captureNext()
+#    update(panServo, 0)
+#    captureNext()
+#    update(panServo, 45)
+#    captureNext()
+#    update(panServo, 0)
+    print("Scan Complete!")
+    scanning = False
 
 # Handling the files
 #get current working directory
@@ -102,22 +81,20 @@ os.mkdir(folder_name)
 # construct the output folder path
 output_folder = os.path.join(path, folder_name)
 
-# Callback for dealing with button press'
-button.when_released = button_callback
-panServo.angle = 5
-tiltServo.angle = 5
-sleep(0.25)
-panServo.angle = 0
-tiltServo.angle = 0
-print("ready")
+GPIO.add_event_detect(buttonPin,GPIO.RISING,callback=button_callback)
+
 try:
     while True:
         # Erm... theres not much to do here. I'll have a nap
-        sleep(0.1)
-        pass
+        if not scanning:
+            update(panServo, 0)
+            update(tiltServo, 0)
 #Clean things up at the end
 except KeyboardInterrupt:
-    print ("Goodbye")
+   panServo.stop()
+   tiltServo.stop()
+   GPIO.cleanup()
+   print ("Goodbye")
 
 """
 The short version of how servos are controlled
@@ -152,4 +129,3 @@ Don't use dutycycles, if possible use pulse widths, and think in pulse widths.
 If you send pulses at 60 Hz by duty cycle the servo will go to the wrong position.
 
 """
-
